@@ -1,0 +1,6 @@
+#!/bin/sh -e
+
+if [ x${HOTPLUG} = xudev ]; then
+	# Stop udevd, because we will start it later after chroot
+	killall udevd 2>/dev/null || true
+fi

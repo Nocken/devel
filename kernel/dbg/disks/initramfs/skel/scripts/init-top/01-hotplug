@@ -1,0 +1,22 @@
+#!/bin/sh -e
+
+if [ x${HOTPLUG} != x ]; then
+	case ${HOTPLUG} in 
+		udev)
+			# unset extern hotplug
+			echo "" > /sys/kernel/uevent_helper
+			# start udev, and do devices trigger
+			udevd --daemon --resolve-names=never
+			udevadm trigger --action=add
+			;;
+		mdev)
+			# create device nodes
+			/sbin/mdev -s
+			# set hotplug
+			echo /sbin/mdev > /proc/sys/kernel/hotplug
+			;;
+		*)
+			echo "Unknown hotplug type ${HOTPLUG}..."
+			;;
+	esac
+fi

@@ -1,0 +1,6 @@
+#!/bin/sh -e
+
+if [ x${HOTPLUG} = xudev ]; then
+	# Sync udev trigger
+	udevadm settle || true
+fi

@@ -1,0 +1,14 @@
+# !/bin/sh
+
+if [ x$RUNNING != x ]; then
+	return
+fi
+RUNNING=1
+INIT_D="/etc/init.d"
+
+echo "-----------------init start-----------------"
+for s in $INIT_D/[0-9]*; do
+	. $s
+done
+echo "----------------- init end -----------------"
+

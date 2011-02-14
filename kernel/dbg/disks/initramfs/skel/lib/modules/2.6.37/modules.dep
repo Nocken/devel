@@ -1,0 +1,33 @@
+kernel/arch/x86/kernel/test_nx.ko:
+kernel/drivers/scsi/raid_class.ko:
+kernel/drivers/scsi/scsi_transport_sas.ko:
+kernel/drivers/scsi/scsi_wait_scan.ko:
+kernel/drivers/net/pcnet32.ko:
+kernel/drivers/net/ppp_generic.ko: kernel/drivers/net/slhc.ko
+kernel/drivers/net/pppox.ko: kernel/drivers/net/ppp_generic.ko kernel/drivers/net/slhc.ko
+kernel/drivers/net/pppoe.ko: kernel/drivers/net/pppox.ko kernel/drivers/net/ppp_generic.ko kernel/drivers/net/slhc.ko
+kernel/drivers/net/slhc.ko:
+kernel/drivers/net/8139cp.ko:
+kernel/drivers/message/fusion/mptbase.ko:
+kernel/drivers/message/fusion/mptscsih.ko: kernel/drivers/message/fusion/mptbase.ko
+kernel/drivers/message/fusion/mptspi.ko: kernel/drivers/message/fusion/mptscsih.ko kernel/drivers/message/fusion/mptbase.ko
+kernel/sound/core/seq/snd-seq-midi.ko: kernel/sound/core/snd-rawmidi.ko
+kernel/sound/core/snd-rawmidi.ko:
+kernel/sound/pci/ac97/snd-ac97-codec.ko: kernel/sound/ac97_bus.ko
+kernel/sound/pci/snd-ens1371.ko: kernel/sound/core/snd-rawmidi.ko kernel/sound/pci/ac97/snd-ac97-codec.ko kernel/sound/ac97_bus.ko
+kernel/sound/ac97_bus.ko:
+kernel/net/netfilter/xt_mark.ko:
+kernel/samples/hw_breakpoint/data_breakpoint.ko:
+kernel/samples/kfifo/bytestream-example.ko:
+kernel/samples/kfifo/dma-example.ko:
+kernel/samples/kfifo/inttype-example.ko:
+kernel/samples/kfifo/record-example.ko:
+kernel/samples/kobject/kobject-example.ko:
+kernel/samples/kobject/kset-example.ko:
+kernel/samples/kprobes/jprobe_example.ko:
+kernel/samples/kprobes/kprobe_example.ko:
+kernel/samples/kprobes/kretprobe_example.ko:
+kernel/samples/trace_events/trace-events-sample.ko:
+kernel/samples/tracepoints/tracepoint-probe-sample.ko:
+kernel/samples/tracepoints/tracepoint-probe-sample2.ko:
+kernel/samples/tracepoints/tracepoint-sample.ko:

@@ -1,0 +1,6 @@
+# !/bin/sh
+
+for s in ${INITDIR}/init-bottom/[0-9]*; do
+	. $s
+done
+

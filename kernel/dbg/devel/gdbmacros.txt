@@ -1,0 +1,170 @@
+# This file original come from kdump in the kernel Documentation directory,
+# As it is too old for the current kernel source, I make some modified to
+# ensure it runs well while debuging the current kernel using gdb via qemu.
+#
+# Editor:
+# Zou Yongqian <zouyongqian@gmail.com>
+#
+# This file contains a few gdb macros (user defined commands) to extract
+# useful information from kernel crashdump (kdump) like stack traces of
+# all the processes or a particular process and trapinfo.
+#
+# These macros can be used by copying this file in .gdbinit (put in home
+# directory or current directory) or by invoking gdb command with
+# --command=<command-file-name> option
+#
+# Credits:
+# Alexander Nyberg <alexn@telia.com>
+# V Srivatsa <vatsa@in.ibm.com>
+# Maneesh Soni <maneesh@in.ibm.com>
+#
+
+set var $stack_size = sizeof(union thread_union)
+set var $regs_saved = 0
+
+define get_regs
+	if (!$regs_saved) 
+		set $regs_ebp = $ebp
+		set $regs_esp = $esp
+		set $regs_eip = $eip
+		set $regs_eflags = $eflags
+	end
+	set $eip = (unsigned long)($task->thread.ip)
+	set $esp = (unsigned long)($task->thread.sp)
+	set $ebp = *(unsigned long *)($task->thread.sp)
+	set $regs_saved = 1
+end
+
+define put_regs
+	if ($regs_saved) 
+		set $ebp = (unsigned long)$regs_ebp
+		set $esp = (unsigned long)$regs_esp
+		set $eip = (unsigned long)$regs_eip
+		set $eflags = (unsigned long)$regs_eflags
+	end
+	set $regs_saved = 0
+end
+
+define taskinfo
+	if ($argc > 0)
+		set $task = (struct task_struct *)$arg0
+	end
+	printf "==================================================\n"
+	printf "task 0x%x; pid %d; comm %s:\n", $task, $task.pid, $task.comm
+	printf "==================================================\n"
+end
+
+define current
+	if ($regs_saved)
+		put_regs
+	end
+	set $task = *(struct task_struct **)((unsigned long)$esp & ~($stack_size - 1))
+	taskinfo $task
+end
+
+define bttask
+	if ($argc > 0)
+		set $task = (struct task_struct *)$arg0
+	end
+	taskinfo
+	get_regs
+	backtrace
+	put_regs
+end
+document bttask
+	bttask [task_struct address]
+	backstrace of the task_struct
+end
+
+define lstask
+	set $loop = 0
+	if ($argc > 0)
+		set $loop = (int)$arg0
+	end
+	set $tasks_off=((size_t)&((struct task_struct *)0)->tasks)
+	set $thread_off=((size_t)&((struct task_struct *)0)->thread_group)
+	set $init_t=&init_task
+	set $next_t=(((char *)($init_t->tasks).next) - $tasks_off)
+	while ($next_t != $init_t)
+		set $next_t=(struct task_struct *)$next_t
+
+		taskinfo $next_t
+
+		set $next_th=(((char *)$next_t->thread_group.next) - $thread_off)
+		while ($next_th != $next_t)
+			set $next_th=(struct task_struct *)$next_th
+
+			taskinfo $next_th
+
+			set $next_th=(((char *)$next_th->thread_group.next) - $pid_off)
+		end
+		set $next_t=(char *)($next_t->tasks.next) - $tasks_off
+		set $loop -= 1
+		if ($loop == 0) 
+			set $next_t = $init_t
+		end
+	end
+end
+document lstask
+	list all the tasks or a number of tasks
+end
+
+define rlstask
+	set $loop = 0
+	if ($argc > 0)
+		set $loop = (int)$arg0
+	end
+	set $tasks_off=((size_t)&((struct task_struct *)0)->tasks)
+	set $thread_off=((size_t)&((struct task_struct *)0)->thread_group)
+	set $init_t=&init_task
+	set $prev_t=(((char *)($init_t->tasks).prev) - $tasks_off)
+	while ($prev_t != $init_t)
+		set $prev_t=(struct task_struct *)$prev_t
+
+		taskinfo $prev_t
+
+		set $prev_th=(((char *)$prev_t->thread_group.prev) - $thread_off)
+		while ($prev_th != $prev_t)
+			set $prev_th=(struct task_struct *)$prev_th
+
+			taskinfo $prev_th
+
+			set $prev_th=(((char *)$prev_th->thread_group.prev) - $pid_off)
+		end
+		set $prev_t=(char *)($prev_t->tasks.prev) - $tasks_off
+		set $loop -= 1
+		if ($loop == 0) 
+			set $prev_t = $init_t
+		end
+	end
+end
+document rlstask
+	list all the tasks or a number of tasks in reverse order
+end
+
+define btall
+	set $tasks_off=((size_t)&((struct task_struct *)0)->tasks)
+	set $thread_off=((size_t)&((struct task_struct *)0)->thread_group)
+	set $init_t=&init_task
+	set $next_t=(((char *)($init_t->tasks).next) - $tasks_off)
+	while ($next_t != $init_t)
+		set $next_t=(struct task_struct *)$next_t
+
+		bttask $next_t
+
+		set $next_th=(((char *)$next_t->thread_group.next) - $thread_off)
+		while ($next_th != $next_t)
+			set $next_th=(struct task_struct *)$next_th
+
+			bttask $next_th
+
+			set $next_th=(((char *)$next_th->thread_group.next) - $pid_off)
+		end
+		set $next_t=(char *)($next_t->tasks.next) - $tasks_off
+	end
+end
+document btall
+	dump all thread stack traces on a kernel compiled with CONFIG_FRAME_POINTER
+end
+
+

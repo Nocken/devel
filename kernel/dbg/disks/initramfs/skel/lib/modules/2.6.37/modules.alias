@@ -1,0 +1,19 @@
+# Aliases extracted from modules themselves.
+alias pci:v00001023d00002000sv*sd*bc02sc00i* pcnet32
+alias pci:v00001022d00002000sv*sd*bc*sc*i* pcnet32
+alias pci:v00001022d00002001sv*sd*bc*sc*i* pcnet32
+alias devname:ppp ppp_generic
+alias char-major-108-0 ppp_generic
+alias net-pf-24 pppoe
+alias pci:v00000357d0000000Asv*sd*bc*sc*i* 8139cp
+alias pci:v000010ECd00008139sv*sd*bc*sc*i* 8139cp
+alias pci:v00001000d00000040sv*sd*bc*sc*i* mptspi
+alias pci:v0000117Cd00000030sv*sd*bc*sc*i* mptspi
+alias pci:v00001000d00000030sv*sd*bc*sc*i* mptspi
+alias pci:v00001102d00008938sv*sd*bc*sc*i* snd_ens1371
+alias pci:v00001274d00005880sv*sd*bc*sc*i* snd_ens1371
+alias pci:v00001274d00001371sv*sd*bc*sc*i* snd_ens1371
+alias ip6t_MARK xt_mark
+alias ipt_MARK xt_mark
+alias ip6t_mark xt_mark
+alias ipt_mark xt_mark

