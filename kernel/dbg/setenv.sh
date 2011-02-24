@@ -96,15 +96,7 @@ KPARAMS=""
 VM="kvm"
 RUN="$VM $VMPARAMS"
 
-fix_param () {
-	VP="$VMPARAMS"
-	KP="$KPARAMS"
-	if [ -e $KERNEL ]; then
-		VP="$VP -kernel $KERNEL"
-	fi
-	if [ -e $INITRD ]; then
-		VP="$VP -initrd $INITRD"
-	fi
+split_param () {
 	while [ x"$1" != x ]; do
 		case $1 in
 			-append)
@@ -119,28 +111,42 @@ fix_param () {
 	done
 }
 
+fix_param () {
+	VP="$VMPARAMS"
+	KP="$KPARAMS"
+	if [ -e $KERNEL ]; then
+		VP="$VP -kernel $KERNEL"
+	fi
+	if [ -e $INITRD ]; then
+		VP="$VP -initrd $INITRD"
+	fi
+	split_param "$@"
+}
+
 run () {
 	if [ -e $MNTFLAG ]; then
 		echo "image have been mounted, umount it first!"	
 	else
 		fix_param "$@"
+		echo $VM $VP -append "$KP"
 		$VM $VP -append "$KP"
 	fi
 }
 
 dbg () {
-	local VP KP
 	VP="-nographic -s"
 	KP="console=ttyS0"
-	run $VP -append $KP "$@"
+	split_param "$@"
+	run $VP -append "$KP"
 }
 
 qdbg () {
-	local TMP
-	TMP=$VM
 	VM=qemu
-	dbg -S "$@"
-	VM=$TMP
+	VP="-S"
+	KP="HOTPLUG=mdev"
+	split_param "$@"
+	dbg $VP -append "$KP"
+	VM=kvm
 }
 
 if [ x$1 != x ]; then
