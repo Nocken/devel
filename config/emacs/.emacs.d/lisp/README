@@ -1,0 +1,4 @@
+speedbar.el: 23.3 
+	support parsing assembler file
+	support fast preview keymaps
+	
