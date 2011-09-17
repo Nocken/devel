@@ -372,7 +372,8 @@ is attached to."
 			(symbol :tag "Property")
 			(sexp :tag "Value"))))
 
-(defcustom speedbar-use-imenu-flag (fboundp 'imenu)
+(defcustom speedbar-use-imenu-flag nil
+; (defcustom speedbar-use-imenu-flag (fboundp 'imenu)
   "Non-nil means use imenu for file parsing, nil to use etags.
 XEmacs prior to 20.4 doesn't support imenu, therefore the default is to
 use etags instead.  Etags support is not as robust as imenu support."

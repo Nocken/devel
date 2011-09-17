@@ -1,4 +1,5 @@
 speedbar.el: 23.3 
 	support parsing assembler file
 	support fast preview keymaps
+	disable using imenu to parse source(imenu have some bugs and could not support preview mode with a little lisp modification)
 	
