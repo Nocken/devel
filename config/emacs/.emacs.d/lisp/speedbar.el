@@ -803,6 +803,7 @@ to toggle this value.")
   ;; fast preview
   (define-key speedbar-key-map "N" 'speedbar-fast-preview-next)
   (define-key speedbar-key-map "P" 'speedbar-fast-preview-prev)
+  (define-key speedbar-key-map "l" 'speedbar-fast-preview)
 
   ;; navigation
   (define-key speedbar-key-map "n" 'speedbar-next)
@@ -1308,15 +1309,19 @@ and the existence of packages."
 	    (apply 'set-mouse-position pos)
 	    (speedbar-item-info))))))
 
+(defun speedbar-fast-preview ()
+  "Fast preview the item in a speedbar buffer."
+  (interactive)
+  (setq speedbar-fast-preview-flag t)
+  (speedbar-edit-line)
+  (setq speedbar-fast-preview-flag nil))
+
 (defun speedbar-fast-preview-next (arg)
   "Move to and fast preview the next ARGth line in a speedbar buffer."
   (interactive "p")
   (forward-line (or arg 1))
   (speedbar-position-cursor-on-line)
-  (setq speedbar-fast-preview-flag t)
-  (speedbar-edit-line)
-  (setq speedbar-fast-preview-flag nil)
-  )
+  (speedbar-fast-preview))
 
 (defun speedbar-fast-preview-prev (arg)
   "Move to and fast preview the previous ARGth line in a speedbar buffer."
