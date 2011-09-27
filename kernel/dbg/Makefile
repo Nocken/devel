@@ -10,6 +10,7 @@ all:
 modules_install:
 	$(Q)mkdir -p $(INSTALL_MOD_PATH)
 	$(Q)make -C linux $@ && { \
+		./setenv.sh sync_root $(INSTALL_MOD_PATH); \
 		cd disks/initramfs; \
 		rm -rf skel/lib/modules; \
 	       	cp -aT $(INSTALL_MOD_PATH) skel; \

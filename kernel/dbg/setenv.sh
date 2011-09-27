@@ -3,18 +3,33 @@ FS="ext3"
 IMG="sda.img"
 MNT="rootfs"
 MNTFLAG=".mounted"
+
 TAPDEV="tapvm"
 TAPIP="10.3.2.1"
 TAPNET="10.3.2.0"
 TAPMASK="24"
 
-TOP=`pwd`
+POS=`readlink -f $0`
+TOP=`dirname $POS`
 LINUXDIR="$TOP/linux"
 BZIMAGE="$LINUXDIR/arch/x86/boot/bzImage"
 VMIMAGE="$LINUXDIR/vmlinux"
 KERNEL="$BZIMAGE"
-INITRD="$TOP/disks/initramfs/initramfs.bin"
+INITRD="$TOP/disks/initramfs/initramfs.bin.gz"
 NFSMNT="$TOP/mnt"
+
+chroot_param() {
+	if [ $# -gt 0 ]; then
+		IMG="$1"
+	else
+		IMG="sda.img"
+	fi
+	if [ $# -gt 1 ]; then
+		MNT="$2"
+	else
+		MNT="rootfs"
+	fi
+}
 
 pre_chroot() {
 	sudo sh -c \
@@ -45,6 +60,8 @@ post_chroot() {
 }
 
 chroot() {
+	chroot_param "$@"
+	pre_chroot
 	sudo sh -c \
 	"
 	chroot "$MNT" /usr/bin/env -i \
@@ -52,6 +69,31 @@ chroot() {
 	PATH=/bin:/usr/bin:/sbin:/usr/sbin \
 	/bin/bash --login
 	"
+	post_chroot
+}
+
+sync_root() {
+	local valid;
+	valid=0;
+	while [ ! $# -eq 0 ]; do
+		if [ -d "$1" ]; then
+			if [ $valid -eq 0 ]; then
+				pre_chroot;
+			fi
+			valid=1;
+			sudo cp -drvT $1 $MNT
+		else
+			echo "'$1' is not a valid directory path."
+		fi
+		shift;
+	done
+	if [ $valid -eq 1 ]; then
+		post_chroot;
+	else
+		echo "usage: sync directorys into the rootfs"
+		return 1
+	fi
+	return 0
 }
 
 init() {
@@ -84,13 +126,15 @@ VMPARAMS=" \
 	-k en-us \
 	-m 512 \
 	-rtc base=utc \
-	-vga std \
-	-soundhw ac97 \
 	-net nic,vlan=0 \
 	-net tap,vlan=0,ifname=${TAPDEV},script=no,downscript=no \
 	"
 
+#VMPARAMS="$VMPARAMS -vga std"
+#VMPARAMS="$VMPARAMS -soundhw ac97"
+
 #KPARAMS="root=/dev/sda"
+#KPARAMS="vga=0x315 logo.nologo=1"
 KPARAMS=""
 
 VM="kvm"
