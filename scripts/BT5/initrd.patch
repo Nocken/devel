@@ -1,0 +1,144 @@
+diff -Nur initrd.orig/scripts/casper initrd.usbdisk/scripts/casper
+--- initrd.orig/scripts/casper	2011-10-20 23:54:43.023261518 +0800
++++ initrd.usbdisk/scripts/casper	2011-10-20 23:55:24.899469182 +0800
+@@ -550,30 +550,16 @@
+         fi
+     fi
+     # or do the scan of block devices
+-    for sysblock in $(echo /sys/block/* | tr ' ' '\n' | egrep -v "/(loop|ram|fd)"); do
++    for sysblock in $(echo /sys/block/loop* | tr ' ' '\n'); do
+         devname=$(sys2dev "${sysblock}")
+         [ -e "$devname" ] || continue
+         fstype=$(get_fstype "${devname}")
+-        if /lib/udev/cdrom_id ${devname} > /dev/null; then
+-            if check_dev "null" "${devname}" ; then
+-                return 0
+-            fi
+-        elif is_nice_device "${sysblock}" ; then
++        if [ "${fstype}" = "iso9660" ]; then
+             for dev in $(subdevices "${sysblock}"); do
+                 if check_dev "${dev}" ; then
+                     return 0
+                 fi
+             done
+-        elif [ "${fstype}" = "squashfs" -o \
+-                "${fstype}" = "ext4" -o \
+-                "${fstype}" = "ext3" -o \
+-                "${fstype}" = "ext2" ]; then
+-            # This is an ugly hack situation, the block device has
+-            # an image directly on it.  It's hopefully
+-            # casper, so take it and run with it.
+-            ln -s "${devname}" "${devname}.${fstype}"
+-            echo "${devname}.${fstype}"
+-            return 0
+         fi
+     done
+     return 1
+diff -Nur initrd.orig/scripts/casper-bottom/05mountpoints initrd.usbdisk/scripts/casper-bottom/05mountpoints
+--- initrd.orig/scripts/casper-bottom/05mountpoints	2011-10-20 23:54:43.023261518 +0800
++++ initrd.usbdisk/scripts/casper-bottom/05mountpoints	2011-10-20 23:50:15.621935552 +0800
+@@ -23,5 +23,7 @@
+ # Move to the new root filesystem so that programs there can get at it.
+ mkdir -p /root/cdrom
+ mount -n -o move /cdrom /root/cdrom
++mkdir -p /root/usbdisk
++mount -n -o move /usbdisk /root/usbdisk
+ 
+ log_end_msg
+diff -Nur initrd.orig/scripts/casper-premount/20usbdisk_mount initrd.usbdisk/scripts/casper-premount/20usbdisk_mount
+--- initrd.orig/scripts/casper-premount/20usbdisk_mount	1970-01-01 08:00:00.000000000 +0800
++++ initrd.usbdisk/scripts/casper-premount/20usbdisk_mount	2011-10-20 23:38:34.434458544 +0800
+@@ -0,0 +1,86 @@
++#!/bin/sh
++
++. /scripts/casper-functions
++. /scripts/casper-helpers
++
++mountpoint=/usbdisk
++
++mkdir -p $mountpoint
++
++is_nice_device() {
++    sysfs_path="${1#/sys}"
++    if /lib/udev/path_id "${sysfs_path}" | egrep -q "ID_PATH=(usb|pci-[^-]*-(ide|scsi|usb)|platform-orion-ehci|platform-mmc|platform-mxsdhci)"; then
++        return 0
++    fi
++    if echo ${sysfs_path} | grep -q "^/block/dm-"; then
++        return 0
++    fi
++    return 1
++}
++
++is_usbdisk_path() {
++    isopath="$1/boot/BT.iso"
++    if [ -e "$isopath" ]; then
++	dev="$(losetup -f)"
++        if [ "$dev" ]; then
++            losetup "$dev" "$isopath"
++        fi
++        return 0
++    fi
++    return 1
++}
++
++check_usbdiskdev() {
++    sysdev="${1}"
++
++    if [ -z "${devname}" ]; then
++        devname=$(sys2dev "${sysdev}")
++    fi
++
++    if [ -d "${devname}" ]; then
++        mount -o bind "${devname}" $mountpoint || continue
++        if is_usbdisk_path $mountpoint; then
++            return 0
++        else
++            umount $mountpoint
++        fi
++    fi
++    [ -e "$devname" ] || continue
++
++    fstype=$(get_fstype "${devname}")
++    if is_supported_fs ${fstype}; then
++        mount -t ${fstype} -o ro,noatime "${devname}" $mountpoint || continue
++        if is_usbdisk_path $mountpoint; then
++            return 0
++        else
++            umount $mountpoint
++        fi
++    fi
++
++    return 1
++}
++
++find_usbdiskfs() {
++    for sysblock in $(echo /sys/block/* | tr ' ' '\n' | egrep -v "/(loop|ram|fd)"); do
++        devname=$(sys2dev "${sysblock}")
++        [ -e "$devname" ] || continue
++        fstype=$(get_fstype "${devname}")
++        if is_nice_device "${sysblock}" ; then
++            for dev in $(subdevices "${sysblock}"); do
++                if check_usbdiskdev "${dev}" ; then
++                    return 0
++                fi
++            done
++        fi
++    done
++    return 1
++}
++
++i=0
++while [ "$i" -lt 60 ]; do
++	if find_usbdiskfs; then
++		break;
++	fi
++	sleep 1
++	i="$(($i + 1))"
++done
+diff -Nur initrd.orig/scripts/casper-premount/ORDER initrd.usbdisk/scripts/casper-premount/ORDER
+--- initrd.orig/scripts/casper-premount/ORDER	2011-10-20 23:54:43.019261495 +0800
++++ initrd.usbdisk/scripts/casper-premount/ORDER	2011-10-18 23:21:09.000000000 +0800
+@@ -1,2 +1,3 @@
+ /scripts/casper-premount/10driver_updates
++/scripts/casper-premount/20usbdisk_mount
+ [ -e /conf/param.conf ] && . /conf/param.conf
