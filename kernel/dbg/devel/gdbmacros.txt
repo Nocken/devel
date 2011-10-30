@@ -96,12 +96,12 @@ define lstask
 
 			taskinfo $next_th
 
-			set $next_th=(((char *)$next_th->thread_group.next) - $pid_off)
+			set $next_th=(((char *)$next_th->thread_group.next) - $thread_off)
 		end
 		set $next_t=(char *)($next_t->tasks.next) - $tasks_off
 		set $loop -= 1
 		if ($loop == 0) 
-			set $next_t = $init_t
+			loop_break
 		end
 	end
 end
@@ -129,12 +129,12 @@ define rlstask
 
 			taskinfo $prev_th
 
-			set $prev_th=(((char *)$prev_th->thread_group.prev) - $pid_off)
+			set $prev_th=(((char *)$prev_th->thread_group.prev) - $thread_off)
 		end
 		set $prev_t=(char *)($prev_t->tasks.prev) - $tasks_off
 		set $loop -= 1
 		if ($loop == 0) 
-			set $prev_t = $init_t
+			loop_break
 		end
 	end
 end
@@ -158,7 +158,7 @@ define btall
 
 			bttask $next_th
 
-			set $next_th=(((char *)$next_th->thread_group.next) - $pid_off)
+			set $next_th=(((char *)$next_th->thread_group.next) - $thread_off)
 		end
 		set $next_t=(char *)($next_t->tasks.next) - $tasks_off
 	end
